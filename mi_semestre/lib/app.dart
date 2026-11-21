@@ -6,11 +6,8 @@ import 'theme.dart';
 import 'ui/home_shell.dart';
 
 class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({
-    super.key,
-    required AppState state,
-    required super.child,
-  }) : super(notifier: state);
+  const AppScope({super.key, required AppState state, required super.child})
+    : super(notifier: state);
 
   static AppState of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -25,16 +22,16 @@ class AppScope extends InheritedNotifier<AppState> {
   }
 }
 
-class MiSemestreApp extends StatefulWidget {
-  const MiSemestreApp({super.key, this.state});
+class OrganiUApp extends StatefulWidget {
+  const OrganiUApp({super.key, this.state});
 
   final AppState? state;
 
   @override
-  State<MiSemestreApp> createState() => _MiSemestreAppState();
+  State<OrganiUApp> createState() => _OrganiUAppState();
 }
 
-class _MiSemestreAppState extends State<MiSemestreApp> {
+class _OrganiUAppState extends State<OrganiUApp> {
   late final AppState _state;
   late final bool _ownsState;
 
@@ -64,7 +61,7 @@ class _MiSemestreAppState extends State<MiSemestreApp> {
         animation: _state,
         builder: (context, _) {
           return MaterialApp(
-            title: 'MiSemestre',
+            title: 'OrganiU',
             debugShowCheckedModeBanner: false,
             theme: buildAppTheme(Brightness.light),
             darkTheme: buildAppTheme(Brightness.dark),

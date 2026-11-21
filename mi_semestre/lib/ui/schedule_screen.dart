@@ -5,6 +5,7 @@ import '../domain/academic_logic.dart';
 import '../domain/models.dart';
 import 'block_form_sheet.dart';
 import 'format.dart';
+import 'schedule_share_screen.dart';
 import 'subject_form_screen.dart';
 import 'widgets/common.dart';
 
@@ -32,8 +33,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       return EmptyState(
         icon: Icons.calendar_month_outlined,
         title: 'Tu horario, siempre a mano',
-        message:
-            'Crea una materia y luego agrega sus bloques de horario. Verás tu semana completa aquí.',
+        message: 'Crea una materia y luego agrega sus bloques de horario. Verás tu semana completa aquí.',
         actionLabel: 'Agregar materia',
         onAction: () => showSubjectForm(context),
       );
@@ -72,19 +72,30 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: <Widget>[
-              Text(
-                weekdayName(_weekday),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      weekdayName(_weekday),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '${classes.length} ${classes.length == 1 ? 'clase' : 'clases'}'
+                      ' · ${(totalMinutes / 60).toStringAsFixed(totalMinutes % 60 == 0 ? 0 : 1)} h',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                '${classes.length} ${classes.length == 1 ? 'clase' : 'clases'}'
-                ' · ${(totalMinutes / 60).toStringAsFixed(totalMinutes % 60 == 0 ? 0 : 1)} h',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              IconButton(
+                tooltip: 'Compartir horario por QR',
+                icon: const Icon(Icons.qr_code_outlined),
+                onPressed: () => showScheduleShareMenu(context),
               ),
             ],
           ),
@@ -120,10 +131,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Future<void> _showActions(
-    BuildContext context,
-    ScheduleBlock block,
-  ) async {
+  Future<void> _showActions(BuildContext context, ScheduleBlock block) async {
     final state = AppScope.read(context);
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -230,10 +238,7 @@ class _ScheduleCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.more_horiz,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              Icon(Icons.more_horiz, color: theme.colorScheme.onSurfaceVariant),
             ],
           ),
         ),

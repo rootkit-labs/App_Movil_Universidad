@@ -7,15 +7,7 @@ import 'widgets/common.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  static const List<int> _reminderOptions = <int>[
-    5,
-    10,
-    15,
-    30,
-    60,
-    120,
-    1440,
-  ];
+  static const List<int> _reminderOptions = <int>[5, 10, 15, 30, 60, 120, 1440];
 
   String _reminderLabel(int minutes) {
     if (minutes >= 1440) {
@@ -86,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Permiso denegado. Actívalo desde Ajustes de Android > MiSemestre > Notificaciones.',
+                          'Permiso denegado. Actívalo desde Ajustes de Android > OrganiU > Notificaciones.',
                         ),
                       ),
                     );
@@ -177,15 +169,22 @@ class SettingsScreen extends StatelessWidget {
             children: <Widget>[
               const ListTile(
                 leading: Icon(Icons.info_outline),
-                title: Text('MiSemestre'),
-                subtitle: Text('Versión 1.0.0 · Proyecto de Programación Móvil'),
+                title: Text('OrganiU'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('Versión 1.0.0 · Proyecto de Programación Móvil'),
+                    Text('Propietario: Rooney M. Mayorga'),
+                  ],
+                ),
               ),
               Divider(height: 1),
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Text(
                   'Tus datos se guardan únicamente en este teléfono. La aplicación '
-                  'funciona sin internet y no solicita ubicación, cámara ni contactos.',
+                  'funciona sin internet y no solicita ubicación ni contactos. La cámara '
+                  'solo se usa si eliges escanear un horario por QR.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

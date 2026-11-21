@@ -1,5 +1,6 @@
 import 'package:mi_semestre/data/repository.dart';
 import 'package:mi_semestre/domain/models.dart';
+import 'package:mi_semestre/services/schedule_share_service.dart';
 
 class InMemoryRepository extends Repository {
   InMemoryRepository();
@@ -63,12 +64,12 @@ class InMemoryRepository extends Repository {
   }
 
   @override
-  Future<List<ScheduleBlock>> blocks() async => List<ScheduleBlock>.of(_blocks)
-    ..sort((a, b) {
-      final byDay = a.weekday.compareTo(b.weekday);
-      if (byDay != 0) return byDay;
-      return a.startMinutes.compareTo(b.startMinutes);
-    });
+  Future<List<ScheduleBlock>> blocks() async =>
+      List<ScheduleBlock>.of(_blocks)..sort((a, b) {
+        final byDay = a.weekday.compareTo(b.weekday);
+        if (byDay != 0) return byDay;
+        return a.startMinutes.compareTo(b.startMinutes);
+      });
 
   @override
   Future<int> saveBlock(ScheduleBlock block) async {
@@ -93,8 +94,7 @@ class InMemoryRepository extends Repository {
 
   @override
   Future<List<Assessment>> assessments() async =>
-      List<Assessment>.of(_assessments)
-        ..sort((a, b) => a.due.compareTo(b.due));
+      List<Assessment>.of(_assessments)..sort((a, b) => a.due.compareTo(b.due));
 
   @override
   Future<int> saveAssessment(Assessment assessment) async {
@@ -103,8 +103,7 @@ class InMemoryRepository extends Repository {
       _assessments.add(assessment.copyWith(id: id));
       return id;
     }
-    final index =
-        _assessments.indexWhere((item) => item.id == assessment.id);
+    final index = _assessments.indexWhere((item) => item.id == assessment.id);
     if (index >= 0) {
       _assessments[index] = assessment;
     } else {
@@ -120,13 +119,77 @@ class InMemoryRepository extends Repository {
 
   @override
   Future<Map<String, Object?>> exportAll() async => <String, Object?>{
-        'app': 'mi_semestre',
-        'version': 1,
-        'subjects': _subjects.map((subject) => subject.toMap()).toList(),
-        'blocks': _blocks.map((block) => block.toMap()).toList(),
-        'assessments':
-            _assessments.map((assessment) => assessment.toMap()).toList(),
-      };
+    'app': 'mi_semestre',
+    'version': 1,
+    'subjects': _subjects.map((subject) => subject.toMap()).toList(),
+    'blocks': _blocks.map((block) => block.toMap()).toList(),
+    'assessments': _assessments
+        .map((assessment) => assessment.toMap())
+        .toList(),
+  };
+
+  @override
+  Future<ScheduleImportResult> mergeSharedSchedule(
+    SharedSchedule schedule,
+  ) async {
+    final nameToId = <String, int>{
+      for (final subject in _subjects)
+        if (subject.id != null) subject.name.toLowerCase(): subject.id!,
+    };
+    final resolved = <int, int>{};
+    var subjectsAdded = 0;
+    var blocksAdded = 0;
+    for (var index = 0; index < schedule.subjects.length; index++) {
+      final shared = schedule.subjects[index];
+      final key = shared.name.toLowerCase();
+      final existingId = nameToId[key];
+      if (existingId != null) {
+        resolved[index] = existingId;
+        continue;
+      }
+      final id = _nextSubjectId++;
+      _subjects.add(
+        Subject(
+          id: id,
+          name: shared.name,
+          teacher: shared.teacher,
+          room: shared.room,
+          colorValue: shared.colorValue,
+        ),
+      );
+      nameToId[key] = id;
+      resolved[index] = id;
+      subjectsAdded++;
+    }
+    for (final block in schedule.blocks) {
+      final subjectId = resolved[block.subjectIndex];
+      if (subjectId == null) continue;
+      final duplicate = _blocks.any(
+        (item) =>
+            item.subjectId == subjectId &&
+            item.weekday == block.weekday &&
+            item.startMinutes == block.startMinutes &&
+            item.endMinutes == block.endMinutes &&
+            item.room == block.room,
+      );
+      if (duplicate) continue;
+      _blocks.add(
+        ScheduleBlock(
+          id: _nextBlockId++,
+          subjectId: subjectId,
+          weekday: block.weekday,
+          startMinutes: block.startMinutes,
+          endMinutes: block.endMinutes,
+          room: block.room,
+        ),
+      );
+      blocksAdded++;
+    }
+    return ScheduleImportResult(
+      subjectsAdded: subjectsAdded,
+      blocksAdded: blocksAdded,
+    );
+  }
 
   @override
   Future<void> importAll(Map<String, dynamic> data) async {

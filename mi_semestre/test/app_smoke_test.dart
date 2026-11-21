@@ -8,14 +8,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'fakes.dart';
 
 Finder _navIcon(IconData icon) => find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.byIcon(icon),
-    );
+  of: find.byType(NavigationBar),
+  matching: find.byIcon(icon),
+);
 
-Future<AppState> _boot(WidgetTester tester, InMemoryRepository repository) async {
+Future<AppState> _boot(
+  WidgetTester tester,
+  InMemoryRepository repository,
+) async {
   final state = AppState(repository: repository);
   await state.init();
-  await tester.pumpWidget(MiSemestreApp(state: state));
+  await tester.pumpWidget(OrganiUApp(state: state));
   await tester.pumpAndSettle();
   return state;
 }
@@ -28,8 +31,9 @@ void main() {
   testWidgets('arranca en Hoy y navega por las cinco pestañas', (tester) async {
     await _boot(tester, InMemoryRepository());
 
-    expect(find.text('Bienvenido a MiSemestre'), findsOneWidget);
+    expect(find.text('Bienvenido a OrganiU'), findsOneWidget);
     expect(find.text('Hoy'), findsWidgets);
+    expect(find.text('Asistencia de Clases'), findsOneWidget);
 
     await tester.tap(_navIcon(Icons.calendar_month_outlined));
     await tester.pumpAndSettle();
@@ -48,6 +52,11 @@ void main() {
     expect(find.text('Apariencia'), findsOneWidget);
     expect(find.text('Recordatorios'), findsOneWidget);
     expect(find.text('Respaldo de datos'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Propietario: Rooney M. Mayorga'),
+      300,
+    );
+    expect(find.text('Propietario: Rooney M. Mayorga'), findsOneWidget);
 
     expect(tester.takeException(), isNull);
   });
@@ -63,10 +72,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Nueva materia'), findsOneWidget);
 
-    await tester.enterText(
-      find.byType(TextFormField).first,
-      'Álgebra Lineal',
-    );
+    await tester.enterText(find.byType(TextFormField).first, 'Álgebra Lineal');
     await tester.tap(find.text('Guardar materia'));
     await tester.pumpAndSettle();
 
@@ -76,8 +82,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('muestra la próxima clase y las entregas pendientes',
-      (tester) async {
+  testWidgets('muestra la próxima clase y las entregas pendientes', (
+    tester,
+  ) async {
     final repository = InMemoryRepository();
     final now = DateTime.now();
     final tomorrow = now.add(const Duration(days: 1));

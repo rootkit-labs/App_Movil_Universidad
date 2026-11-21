@@ -1,4 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mi_semestre/domain/academic_logic.dart';
 import 'package:mi_semestre/domain/models.dart';
 
@@ -230,6 +230,141 @@ void main() {
         subjectId: 1,
       );
       expect(result, 0);
+    });
+  });
+
+  group('simulateFinalGrade', () {
+    test('calcula la nota necesaria con ponderación', () {
+      final assessments = <Assessment>[
+        Assessment(
+          id: 1,
+          subjectId: 1,
+          title: 'Parcial',
+          type: 'Examen',
+          due: DateTime(2026, 3, 1),
+          grade: 70,
+          weight: 40,
+        ),
+        Assessment(
+          id: 2,
+          subjectId: 1,
+          title: 'Final',
+          type: 'Examen',
+          due: DateTime(2026, 4, 1),
+          weight: 60,
+        ),
+      ];
+      final result = simulateFinalGrade(
+        assessments: assessments,
+        subjectId: 1,
+        targetGrade: 80,
+      );
+      expect(result.currentAverage, closeTo(70, 0.001));
+      expect(result.pendingCount, 1);
+      expect(result.neededGrade, closeTo(86.666, 0.001));
+    });
+
+    test('calcula la nota necesaria sin ponderación', () {
+      final assessments = <Assessment>[
+        Assessment(
+          id: 1,
+          subjectId: 1,
+          title: 'Tarea',
+          type: 'Entrega',
+          due: DateTime(2026, 3, 1),
+          grade: 8,
+        ),
+        Assessment(
+          id: 2,
+          subjectId: 1,
+          title: 'Examen',
+          type: 'Examen',
+          due: DateTime(2026, 4, 1),
+        ),
+      ];
+      final result = simulateFinalGrade(
+        assessments: assessments,
+        subjectId: 1,
+        targetGrade: 9,
+      );
+      expect(result.neededGrade, closeTo(10, 0.001));
+    });
+
+    test('no calcula nada cuando ya no hay evaluaciones pendientes', () {
+      final result = simulateFinalGrade(
+        assessments: <Assessment>[
+          Assessment(
+            id: 1,
+            subjectId: 1,
+            title: 'Única',
+            type: 'Examen',
+            due: DateTime(2026, 3, 1),
+            grade: 95,
+          ),
+        ],
+        subjectId: 1,
+        targetGrade: 90,
+      );
+      expect(result.pendingCount, 0);
+      expect(result.neededGrade, isNull);
+    });
+  });
+
+  group('conflictingBlocks', () {
+    final existing = <ScheduleBlock>[
+      ScheduleBlock(
+        id: 1,
+        subjectId: 1,
+        weekday: 1,
+        startMinutes: 8 * 60,
+        endMinutes: 10 * 60,
+      ),
+      ScheduleBlock(
+        id: 2,
+        subjectId: 2,
+        weekday: 1,
+        startMinutes: 11 * 60,
+        endMinutes: 12 * 60,
+      ),
+      ScheduleBlock(
+        id: 3,
+        subjectId: 3,
+        weekday: 2,
+        startMinutes: 8 * 60,
+        endMinutes: 10 * 60,
+      ),
+    ];
+
+    test('detecta un solapamiento parcial del mismo día', () {
+      final candidate = ScheduleBlock(
+        subjectId: 4,
+        weekday: 1,
+        startMinutes: 9 * 60 + 30,
+        endMinutes: 11 * 60 + 30,
+      );
+      final result = conflictingBlocks(blocks: existing, candidate: candidate);
+      expect(result.map((b) => b.id), <int>[1, 2]);
+    });
+
+    test('ignora bloques de otro día y el propio bloque al editar', () {
+      final sameDay = ScheduleBlock(
+        id: 1,
+        subjectId: 1,
+        weekday: 1,
+        startMinutes: 8 * 60,
+        endMinutes: 10 * 60,
+      );
+      final otherDay = ScheduleBlock(
+        subjectId: 4,
+        weekday: 2,
+        startMinutes: 9 * 60,
+        endMinutes: 10 * 60,
+      );
+      expect(conflictingBlocks(blocks: existing, candidate: sameDay), isEmpty);
+      expect(
+        conflictingBlocks(blocks: existing, candidate: otherDay),
+        hasLength(1),
+      );
     });
   });
 }

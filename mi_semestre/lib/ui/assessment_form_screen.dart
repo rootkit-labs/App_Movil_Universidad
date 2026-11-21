@@ -55,7 +55,8 @@ class _AssessmentFormScreenState extends State<AssessmentFormScreen> {
     _type = assessment?.type ?? kAssessmentTypes.first;
     _done = assessment?.done ?? false;
     final now = DateTime.now();
-    _due = assessment?.due ??
+    _due =
+        assessment?.due ??
         DateTime(now.year, now.month, now.day, 8).add(const Duration(days: 1));
   }
 
@@ -178,8 +179,7 @@ class _AssessmentFormScreenState extends State<AssessmentFormScreen> {
         body: EmptyState(
           icon: Icons.school_outlined,
           title: 'Primero crea una materia',
-          message:
-              'Las tareas y exámenes pertenecen a una materia. Crea una para continuar.',
+          message: 'Las tareas y exámenes pertenecen a una materia. Crea una para continuar.',
           actionLabel: 'Crear materia',
           onAction: () {
             Navigator.of(context).pop();

@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../data/repository.dart';
 import '../domain/models.dart';
 import '../services/notification_service.dart';
+import '../services/schedule_share_service.dart';
 import '../services/settings_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -12,9 +13,9 @@ class AppState extends ChangeNotifier {
     Repository? repository,
     SettingsService? settings,
     NotificationService? notifications,
-  })  : _repository = repository ?? Repository(),
-        _settings = settings ?? SettingsService(),
-        _notifications = notifications ?? NotificationService.instance;
+  }) : _repository = repository ?? Repository(),
+       _settings = settings ?? SettingsService(),
+       _notifications = notifications ?? NotificationService.instance;
 
   final Repository _repository;
   final SettingsService _settings;
@@ -145,8 +146,9 @@ class AppState extends ChangeNotifier {
       final now = DateTime.now();
       for (final assessment in assessments) {
         if (assessment.done) continue;
-        final when =
-            assessment.due.subtract(Duration(minutes: reminderMinutes));
+        final when = assessment.due.subtract(
+          Duration(minutes: reminderMinutes),
+        );
         if (!when.isAfter(now)) continue;
         final id = assessment.id;
         if (id == null) continue;
@@ -176,6 +178,13 @@ class AppState extends ChangeNotifier {
     await _repository.importAll(decoded);
     await refresh();
     await _syncNotifications();
+  }
+
+  Future<ScheduleImportResult> importScheduleQr(String raw) async {
+    final schedule = parseScheduleQr(raw);
+    final result = await _repository.mergeSharedSchedule(schedule);
+    await refresh();
+    return result;
   }
 
   void _notify() {

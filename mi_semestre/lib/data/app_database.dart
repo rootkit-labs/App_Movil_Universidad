@@ -25,8 +25,7 @@ class AppDatabase {
             name TEXT NOT NULL,
             teacher TEXT NOT NULL DEFAULT '',
             room TEXT NOT NULL DEFAULT '',
-            color INTEGER NOT NULL,
-            credits INTEGER NOT NULL DEFAULT 0
+            color INTEGER NOT NULL
           )
         ''');
         await db.execute('''

@@ -5,7 +5,6 @@ class Subject {
     this.teacher = '',
     this.room = '',
     required this.colorValue,
-    this.credits = 0,
   });
 
   final int? id;
@@ -13,7 +12,6 @@ class Subject {
   final String teacher;
   final String room;
   final int colorValue;
-  final int credits;
 
   Subject copyWith({
     int? id,
@@ -21,7 +19,6 @@ class Subject {
     String? teacher,
     String? room,
     int? colorValue,
-    int? credits,
   }) {
     return Subject(
       id: id ?? this.id,
@@ -29,7 +26,6 @@ class Subject {
       teacher: teacher ?? this.teacher,
       room: room ?? this.room,
       colorValue: colorValue ?? this.colorValue,
-      credits: credits ?? this.credits,
     );
   }
 
@@ -40,7 +36,6 @@ class Subject {
       'teacher': teacher,
       'room': room,
       'color': colorValue,
-      'credits': credits,
     };
   }
 
@@ -51,7 +46,6 @@ class Subject {
       teacher: (map['teacher'] as String?) ?? '',
       room: (map['room'] as String?) ?? '',
       colorValue: (map['color'] as int?) ?? 0xFF4F46E5,
-      credits: (map['credits'] as int?) ?? 0,
     );
   }
 }

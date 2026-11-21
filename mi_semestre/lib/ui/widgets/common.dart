@@ -86,10 +86,7 @@ class EmptyState extends StatelessWidget {
             ),
             if (actionLabel != null && onAction != null) ...<Widget>[
               const SizedBox(height: 24),
-              FilledButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),
@@ -183,8 +180,8 @@ class AssessmentTile extends StatelessWidget {
     final accent = overdue
         ? theme.colorScheme.error
         : (subject != null
-            ? Color(subject!.colorValue)
-            : theme.colorScheme.primary);
+              ? Color(subject!.colorValue)
+              : theme.colorScheme.primary);
     final subtitleParts = <String>[
       if (subject != null) subject!.name,
       '${formatShortDate(assessment.due)} · ${formatClock(assessment.due)}',
@@ -252,7 +249,9 @@ class AssessmentTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    overdue ? 'Vencida' : dayLabel(assessment.due, DateTime.now()),
+                    overdue
+                        ? 'Vencida'
+                        : dayLabel(assessment.due, DateTime.now()),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: overdue
                           ? theme.colorScheme.error

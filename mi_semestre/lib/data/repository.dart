@@ -1,9 +1,32 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../domain/models.dart';
+import '../services/schedule_share_service.dart';
 import 'app_database.dart';
 
 class Repository {
+  static const Map<String, Set<String>> _columns = <String, Set<String>>{
+    'subjects': <String>{'id', 'name', 'teacher', 'room', 'color'},
+    'schedule_blocks': <String>{
+      'id',
+      'subject_id',
+      'weekday',
+      'start_minutes',
+      'end_minutes',
+      'room',
+    },
+    'assessments': <String>{
+      'id',
+      'subject_id',
+      'title',
+      'type',
+      'due',
+      'done',
+      'grade',
+      'weight',
+    },
+  };
+
   Future<Database> get _db async => AppDatabase.instance.database;
 
   Future<List<Subject>> subjects() async {
@@ -27,8 +50,11 @@ class Repository {
     final db = await _db;
     await db.transaction((txn) async {
       await txn.delete('assessments', where: 'subject_id = ?', whereArgs: [id]);
-      await txn.delete('schedule_blocks',
-          where: 'subject_id = ?', whereArgs: [id]);
+      await txn.delete(
+        'schedule_blocks',
+        where: 'subject_id = ?',
+        whereArgs: [id],
+      );
       await txn.delete('subjects', where: 'id = ?', whereArgs: [id]);
     });
   }
@@ -112,15 +138,111 @@ class Repository {
     });
   }
 
+  Future<ScheduleImportResult> mergeSharedSchedule(
+    SharedSchedule schedule,
+  ) async {
+    final db = await _db;
+    final nameToId = <String, int>{
+      for (final row in await db.query(
+        'subjects',
+        columns: <String>['id', 'name'],
+      ))
+        (row['name'] as String).toLowerCase(): row['id'] as int,
+    };
+    final existingBlocks = await db.query(
+      'schedule_blocks',
+      columns: <String>[
+        'subject_id',
+        'weekday',
+        'start_minutes',
+        'end_minutes',
+        'room',
+      ],
+    );
+    final blockKeys = existingBlocks
+        .map(
+          (row) => _blockKey(
+            subjectId: row['subject_id'] as int,
+            weekday: row['weekday'] as int,
+            startMinutes: row['start_minutes'] as int,
+            endMinutes: row['end_minutes'] as int,
+            room: (row['room'] as String?) ?? '',
+          ),
+        )
+        .toSet();
+    final resolved = <int, int>{};
+    var subjectsAdded = 0;
+    var blocksAdded = 0;
+
+    await db.transaction((txn) async {
+      for (var index = 0; index < schedule.subjects.length; index++) {
+        final shared = schedule.subjects[index];
+        final key = shared.name.toLowerCase();
+        final existingId = nameToId[key];
+        if (existingId != null) {
+          resolved[index] = existingId;
+          continue;
+        }
+        final id = await txn.insert('subjects', <String, Object?>{
+          'name': shared.name,
+          'teacher': shared.teacher,
+          'room': shared.room,
+          'color': shared.colorValue,
+        });
+        nameToId[key] = id;
+        resolved[index] = id;
+        subjectsAdded++;
+      }
+      for (final block in schedule.blocks) {
+        final subjectId = resolved[block.subjectIndex];
+        if (subjectId == null) continue;
+        final key = _blockKey(
+          subjectId: subjectId,
+          weekday: block.weekday,
+          startMinutes: block.startMinutes,
+          endMinutes: block.endMinutes,
+          room: block.room,
+        );
+        if (blockKeys.contains(key)) continue;
+        await txn.insert('schedule_blocks', <String, Object?>{
+          'subject_id': subjectId,
+          'weekday': block.weekday,
+          'start_minutes': block.startMinutes,
+          'end_minutes': block.endMinutes,
+          'room': block.room,
+        });
+        blockKeys.add(key);
+        blocksAdded++;
+      }
+    });
+
+    return ScheduleImportResult(
+      subjectsAdded: subjectsAdded,
+      blocksAdded: blocksAdded,
+    );
+  }
+
+  String _blockKey({
+    required int subjectId,
+    required int weekday,
+    required int startMinutes,
+    required int endMinutes,
+    required String room,
+  }) {
+    return '$subjectId|$weekday|$startMinutes|$endMinutes|${room.toLowerCase()}';
+  }
+
   Future<void> _insertRow(
     DatabaseExecutor txn,
     String table,
     Object? row,
   ) async {
     if (row is! Map) return;
+    final allowed = _columns[table] ?? const <String>{};
     final values = row.map<String, Object?>(
       (key, value) => MapEntry(key.toString(), value),
     );
+    values.removeWhere((key, value) => !allowed.contains(key));
     await txn.insert(table, values);
   }
 }

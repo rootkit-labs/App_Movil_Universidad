@@ -7,5 +7,5 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
   await bootstrapNotifications();
-  runApp(const MiSemestreApp());
+  runApp(const OrganiUApp());
 }

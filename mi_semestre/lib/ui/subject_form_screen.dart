@@ -26,7 +26,6 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
   late final TextEditingController _name;
   late final TextEditingController _teacher;
   late final TextEditingController _room;
-  late final TextEditingController _credits;
   late int _colorValue;
   bool _saving = false;
 
@@ -39,11 +38,6 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
     _name = TextEditingController(text: subject?.name ?? '');
     _teacher = TextEditingController(text: subject?.teacher ?? '');
     _room = TextEditingController(text: subject?.room ?? '');
-    _credits = TextEditingController(
-      text: subject == null || subject.credits == 0
-          ? ''
-          : subject.credits.toString(),
-    );
     _colorValue = subject?.colorValue ?? kSubjectPalette.first;
   }
 
@@ -52,7 +46,6 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
     _name.dispose();
     _teacher.dispose();
     _room.dispose();
-    _credits.dispose();
     super.dispose();
   }
 
@@ -67,12 +60,13 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
       teacher: _teacher.text.trim(),
       room: _room.text.trim(),
       colorValue: _colorValue,
-      credits: int.tryParse(_credits.text.trim()) ?? 0,
     );
     await state.saveSubject(subject);
     if (!mounted) return;
     messenger.showSnackBar(
-      SnackBar(content: Text(_isEditing ? 'Materia actualizada' : 'Materia agregada')),
+      SnackBar(
+        content: Text(_isEditing ? 'Materia actualizada' : 'Materia agregada'),
+      ),
     );
     Navigator.of(context).pop();
   }
@@ -114,34 +108,9 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _room,
-                    decoration: const InputDecoration(
-                      labelText: 'Aula (opcional)',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: _credits,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Créditos',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) return null;
-                      final parsed = int.tryParse(value.trim());
-                      if (parsed == null || parsed < 0) return 'Inválido';
-                      return null;
-                    },
-                  ),
-                ),
-              ],
+            TextFormField(
+              controller: _room,
+              decoration: const InputDecoration(labelText: 'Aula (opcional)'),
             ),
             const SizedBox(height: 24),
             Text('Color', style: theme.textTheme.titleSmall),

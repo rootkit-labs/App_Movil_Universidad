@@ -5,6 +5,7 @@ import '../domain/academic_logic.dart';
 import '../domain/models.dart';
 import 'block_form_sheet.dart';
 import 'format.dart';
+import 'grade_simulator_sheet.dart';
 import 'subject_form_screen.dart';
 import 'widgets/common.dart';
 
@@ -25,16 +26,11 @@ class SubjectsScreen extends StatelessWidget {
         onAction: () => showSubjectForm(context),
       );
     }
-    final totalCredits = state.subjects.fold<int>(
-      0,
-      (sum, subject) => sum + subject.credits,
-    );
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
       children: <Widget>[
         Text(
-          '${state.subjects.length} ${state.subjects.length == 1 ? 'materia' : 'materias'}'
-          '${totalCredits > 0 ? ' · $totalCredits créditos' : ''}',
+          '${state.subjects.length} ${state.subjects.length == 1 ? 'materia' : 'materias'}',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -57,19 +53,22 @@ class _SubjectCard extends StatelessWidget {
     final theme = Theme.of(context);
     final id = subject.id;
     final blocks = id == null ? 0 : state.blocksForSubject(id).length;
-    final assessments =
-        id == null ? <Assessment>[] : state.assessmentsForSubject(id);
+    final assessments = id == null
+        ? <Assessment>[]
+        : state.assessmentsForSubject(id);
     final pending = assessments.where((a) => !a.done).length;
     final hasGrades = assessments.any((a) => a.grade != null);
-    final average =
-        id == null ? 0.0 : averageGrade(assessments: assessments, subjectId: id);
+    final average = id == null
+        ? 0.0
+        : averageGrade(assessments: assessments, subjectId: id);
 
     final details = <String>[
       if (subject.teacher.isNotEmpty) subject.teacher,
-      if (subject.credits > 0) '${subject.credits} créditos',
       '$blocks ${blocks == 1 ? 'bloque' : 'bloques'}',
       if (pending > 0) '$pending pendientes',
     ];
+
+    final canSimulate = hasGrades || pending > 0;
 
     return Card(
       child: InkWell(
@@ -112,6 +111,18 @@ class _SubjectCard extends StatelessWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    if (canSimulate)
+                      TextButton.icon(
+                        onPressed: () => showGradeSimulator(context, subject),
+                        icon: const Icon(Icons.flag_outlined, size: 16),
+                        label: const Text('Simular nota'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -147,18 +158,23 @@ class _SubjectCard extends StatelessWidget {
                     await showBlockForm(context);
                     return;
                   }
+                  if (value == 'simulate') {
+                    showGradeSimulator(context, subject);
+                    return;
+                  }
                   if (value == 'delete' && id != null) {
                     await _confirmDelete(context, id);
                   }
                 },
                 itemBuilder: (_) => const <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Text('Editar'),
-                  ),
+                  PopupMenuItem<String>(value: 'edit', child: Text('Editar')),
                   PopupMenuItem<String>(
                     value: 'block',
                     child: Text('Agregar bloque de horario'),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'simulate',
+                    child: Text('Simular nota final'),
                   ),
                   PopupMenuItem<String>(
                     value: 'delete',

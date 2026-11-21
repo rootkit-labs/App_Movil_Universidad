@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../app.dart';
+import '../domain/academic_logic.dart';
 import '../domain/models.dart';
+import '../state/app_state.dart';
 import 'format.dart';
 import 'subject_form_screen.dart';
 
@@ -91,24 +93,33 @@ class _BlockFormSheetState extends State<BlockFormSheet> {
     if (_subjectId == null) return;
     if (_endMinutes <= _startMinutes) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La hora de fin debe ser mayor al inicio')),
+        const SnackBar(
+          content: Text('La hora de fin debe ser mayor al inicio'),
+        ),
       );
       return;
     }
     final state = AppScope.read(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    setState(() => _saving = true);
-    await state.saveBlock(
-      ScheduleBlock(
-        id: widget.block?.id,
-        subjectId: _subjectId!,
-        weekday: _weekday,
-        startMinutes: _startMinutes,
-        endMinutes: _endMinutes,
-        room: _room.text.trim(),
-      ),
+    final candidate = ScheduleBlock(
+      id: widget.block?.id,
+      subjectId: _subjectId!,
+      weekday: _weekday,
+      startMinutes: _startMinutes,
+      endMinutes: _endMinutes,
+      room: _room.text.trim(),
     );
+    final conflicts = conflictingBlocks(
+      blocks: state.blocks,
+      candidate: candidate,
+    );
+    if (conflicts.isNotEmpty) {
+      final accepted = await _confirmConflicts(context, state, conflicts);
+      if (!accepted) return;
+    }
+    setState(() => _saving = true);
+    await state.saveBlock(candidate);
     if (!mounted) return;
     messenger.showSnackBar(
       SnackBar(
@@ -116,6 +127,48 @@ class _BlockFormSheetState extends State<BlockFormSheet> {
       ),
     );
     navigator.pop();
+  }
+
+  Future<bool> _confirmConflicts(
+    BuildContext context,
+    AppState state,
+    List<ScheduleBlock> conflicts,
+  ) async {
+    final descriptions = conflicts
+        .map(
+          (block) =>
+              '${state.subjectById(block.subjectId)?.name ?? 'Materia'} · '
+              '${formatMinutesOfDay(block.startMinutes)}–${formatMinutesOfDay(block.endMinutes)}',
+        )
+        .join('\n');
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Horario solapado'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Text('Este bloque se cruza con:'),
+              const SizedBox(height: 8),
+              Text(descriptions),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Guardar de todos modos'),
+          ),
+        ],
+      ),
+    );
+    return accepted == true;
   }
 
   @override
@@ -194,7 +247,9 @@ class _BlockFormSheetState extends State<BlockFormSheet> {
                     child: OutlinedButton.icon(
                       onPressed: () => _pickTime(isStart: true),
                       icon: const Icon(Icons.login_outlined, size: 18),
-                      label: Text('Inicio ${formatMinutesOfDay(_startMinutes)}'),
+                      label: Text(
+                        'Inicio ${formatMinutesOfDay(_startMinutes)}',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -210,9 +265,7 @@ class _BlockFormSheetState extends State<BlockFormSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _room,
-                decoration: const InputDecoration(
-                  labelText: 'Aula (opcional)',
-                ),
+                decoration: const InputDecoration(labelText: 'Aula (opcional)'),
               ),
               const SizedBox(height: 20),
               FilledButton(

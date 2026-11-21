@@ -34,7 +34,8 @@ class NotificationService {
     await init();
     final android = _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (android == null) return false;
     try {
       final granted = await android.requestNotificationsPermission();
@@ -45,15 +46,15 @@ class NotificationService {
   }
 
   NotificationDetails get _details => const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-          enableVibration: true,
-        ),
-      );
+    android: AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      enableVibration: true,
+    ),
+  );
 
   String _formatWhen(DateTime when) {
     final day = when.day.toString().padLeft(2, '0');
@@ -95,7 +96,7 @@ class NotificationService {
     await init();
     await _plugin.show(
       id: testNotificationId,
-      title: 'MiSemestre',
+      title: 'OrganiU',
       body: 'Las notificaciones funcionan correctamente en tu teléfono.',
       notificationDetails: _details,
     );

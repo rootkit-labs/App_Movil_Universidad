@@ -16,9 +16,8 @@ class TodayScreen extends StatelessWidget {
     if (state.subjects.isEmpty) {
       return EmptyState(
         icon: Icons.waving_hand_outlined,
-        title: 'Bienvenido a MiSemestre',
-        message:
-            'Agrega tu primera materia para ver tu horario, tus tareas y recibir recordatorios.',
+        title: 'Bienvenido a OrganiU',
+        message: 'Agrega tu primera materia para ver tu horario, tus tareas y recibir recordatorios.',
         actionLabel: 'Agregar materia',
         onAction: () => showSubjectForm(context),
       );
@@ -67,7 +66,9 @@ class TodayScreen extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 12),
-                const Expanded(child: Text('Hoy no tienes clases registradas.')),
+                const Expanded(
+                  child: Text('Hoy no tienes clases registradas.'),
+                ),
               ],
             ),
           ),
@@ -280,8 +281,10 @@ class _TodayClassTile extends StatelessWidget {
             ),
             if (ongoing)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   borderRadius: BorderRadius.circular(20),

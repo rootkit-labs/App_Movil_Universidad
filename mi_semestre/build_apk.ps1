@@ -1,4 +1,4 @@
-# Compila el APK de MiSemestre en este equipo.
+# Compila el APK de OrganiU en este equipo.
 # Uso:  powershell -ExecutionPolicy Bypass -File .\build_apk.ps1
 
 $ErrorActionPreference = 'Stop'
@@ -20,11 +20,15 @@ if ($LASTEXITCODE -ne 0) { throw 'Las pruebas fallaron' }
 flutter build apk --release --split-per-abi
 if ($LASTEXITCODE -ne 0) { throw 'La compilación del APK falló' }
 
+flutter build apk --release
+if ($LASTEXITCODE -ne 0) { throw 'La compilación del APK universal falló' }
+
 $dist = Join-Path $PSScriptRoot 'dist'
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 $out = Join-Path $PSScriptRoot 'build\app\outputs\flutter-apk'
-Copy-Item (Join-Path $out 'app-arm64-v8a-release.apk') (Join-Path $dist 'MiSemestre-1.0.0-arm64-v8a.apk') -Force
-Copy-Item (Join-Path $out 'app-armeabi-v7a-release.apk') (Join-Path $dist 'MiSemestre-1.0.0-armeabi-v7a.apk') -Force
+Copy-Item (Join-Path $out 'app-arm64-v8a-release.apk') (Join-Path $dist 'OrganiU-1.0.0-arm64-v8a.apk') -Force
+Copy-Item (Join-Path $out 'app-armeabi-v7a-release.apk') (Join-Path $dist 'OrganiU-1.0.0-armeabi-v7a.apk') -Force
+Copy-Item (Join-Path $out 'app-release.apk') (Join-Path $dist 'OrganiU-1.0.0-universal.apk') -Force
 
 Write-Host ''
 Write-Host 'APK listos en:' (Resolve-Path $dist)

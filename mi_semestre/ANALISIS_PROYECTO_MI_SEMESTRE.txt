@@ -1,0 +1,167 @@
+ORGANIU - ANALISIS DEL PROYECTO PARA EXPOSICION
+===============================================
+
+1. PROPOSITO
+------------
+Aplicacion movil Android desarrollada con Flutter/Dart para estudiantes
+universitarios. Concentra en un solo lugar el horario de clases, las tareas y
+examenes, los recordatorios, el simulador de nota final, la exportacion a
+calendario y el acceso al formulario de asistencia. Toda la organizacion
+funciona 100% sin conexion, guarda toda la informacion en el telefono y no
+requiere cuenta de usuario; solo el formulario de asistencia necesita internet.
+El simulador admite escalas 0-10 y 0-100 para adaptarse a la realidad de las
+universidades de Nicaragua. Proyecto de Programacion Movil, propiedad de Rooney
+M. Mayorga.
+Fuente: mi_semestre/README.md, lineas 3-7.
+
+2. FUNCIONALIDAD PRINCIPAL
+--------------------------
+La aplicacion se organiza en cinco pestañas (lib/ui/home_shell.dart, 23-88):
+
+- HOY: clase en curso o proxima clase con cuenta regresiva, clases del dia,
+  entregas de los proximos 7 dias, entregas vencidas y boton "Asistencia de
+  Clases" que abre en el navegador la URL exacta del formulario de Microsoft
+  Forms que ya se compartia por QR (lib/services/attendance_service.dart).
+  Logica: lib/domain/academic_logic.dart, lineas 54-71 y 91-112.
+- HORARIO: bloques por dia (lunes a domingo) con materia, aula, docente y
+  total de horas.
+- TAREAS: examenes, entregas, proyectos y exposiciones; filtros por
+  pendientes/hechas/todas; permite registrar nota y ponderacion.
+- MATERIAS: alta, edicion y eliminacion con color, docente y aula;
+  calculo de promedio ponderado por materia (academic_logic.dart, 141-162).
+  No se registran creditos academicos porque no se usan en Nicaragua.
+- AJUSTES: tema claro/oscuro/sistema, activacion de notificaciones,
+  anticipacion del recordatorio (5 min a 1 dia), notificacion de prueba y
+  respaldo JSON usando el portapapeles.
+- SIMULADOR DE NOTA FINAL: calcula la nota necesaria en las evaluaciones
+  pendientes, respeta ponderaciones y permite escala 0-10 o 0-100
+  (lib/domain/academic_logic.dart, funcion simulateFinalGrade).
+- CHOQUES DE HORARIO: al guardar un bloque se detectan solapamientos y se pide
+  confirmacion antes de guardar (lib/ui/block_form_sheet.dart).
+- CALENDARIO: exporta las entregas pendientes como archivo .ics y lo comparte
+  para abrirlo en el calendario del telefono (lib/services/calendar_service.dart).
+- HORARIO POR QR: opcional. Muestra el horario como QR o escanea el de otro
+  estudiante para agregar materias y bloques sin borrar datos. No incluye notas
+  ni tareas (lib/services/schedule_share_service.dart).
+
+3. PROBLEMA CONCRETO QUE RESUELVE
+--------------------------------
+Evita que el estudiante tenga el horario en un papel, las fechas de entrega en
+un chat y las notas en otro lugar. Responde en segundos a preguntas como:
+- "¿Que clase me toca ahora?"
+- "¿Que entrega vence esta semana?"
+- "¿Como voy en esta materia?"
+- "¿Que nota necesito en el final para alcanzar mi meta?"
+Ademas avisa automaticamente antes de cada entrega y alerta sobre clases
+solapadas antes de guardarlas (lib/domain/academic_logic.dart y
+lib/ui/block_form_sheet.dart). La opcion de QR es opcional: en Nicaragua no es
+compartir horarios una practica comun, pero queda disponible para quien si
+quiera usarlo.
+
+4. VENTAJAS
+-----------
+- Offline-first: usa SQLite local, sin dependencia de internet ni backend
+  (lib/data/app_database.dart, lineas 14-20).
+- Sin cuenta, sin contrasena y sin servidor: no hay datos academicos remotos.
+- Permisos minimos: notificaciones, vibracion y reinicio del dispositivo; la
+  camara solo se usa si el usuario elige escanear un QR
+  (android/app/src/main/AndroidManifest.xml). No pide ubicacion, contactos ni
+  almacenamiento externo.
+- Se instala directamente desde un APK, sin necesidad de Google Play
+  (README.md, lineas 18-39). En dist/ hay tres versiones actualizadas:
+  arm64-v8a (25.5 MB), armeabi-v7a (21.9 MB) y universal (69.7 MB).
+- Interfaz en espanol, tema claro/oscuro y Material 3. El nombre visible es
+  OrganiU; el paquete, la base de datos y el prefijo QR conservan "mi_semestre"
+  para no perder datos ni codigos ya compartidos.
+- Respaldo y restauracion de datos validados (lib/data/repository.dart,
+  lineas 83-125).
+- Arquitectura por capas: presentacion (ui/), estado (state/), dominio
+  (domain/), datos (data/) y servicios (services/).
+- Calidad verificada: flutter analyze sin errores y 25/25 pruebas automatizadas
+  (17 de logica academica, 3 de interfaz, 1 de ICS, 3 de QR y 1 de asistencia).
+- Funciones que destacan sobre una app simple: simulador de nota final,
+  advertencia de choques de horario, exportacion a calendario, acceso directo
+  al formulario de asistencia y QR opcional que comparte solo horario, sin
+  datos sensibles de tareas o notas.
+
+5. APOYO AL ESTUDIANTE
+----------------------
+- Reduce el olvido de clases, exames y fechas de entrega mediante avisos
+  programados.
+- Permite planificar la semana de un vistazo con el horario y el resumen de
+  horas.
+- Da seguimiento a pendientes y entregas vencidas en un solo lugar.
+- Ayuda a estimar el promedio de cada materia y a calcular la nota concreta
+  que necesita en el final, con escala 0-10 o 0-100 segun su universidad.
+- Previene errores de horario al avisar de clases solapadas antes de guardar.
+- Permite llevar las entregas al calendario del telefono con un solo toque.
+- Conserva el formulario de asistencia que ya se usaba: un toque abre la URL
+  exacta sin tener que volver a buscar el QR compartido.
+- La organizacion funciona sin senal de internet, por lo que es util dentro del
+  campus o en zonas con conectividad limitada; solo el formulario de asistencia
+  necesita conexion.
+- No requiere registro ni configuracion previa: se instala y se usa.
+
+6. CUMPLIMIENTO DEL CRITERIO: RAPIDA, INTUITIVA Y SEGURA
+--------------------------------------------------------
+RAPIDA: SI. La pantalla "Hoy" concentra la informacion relevante sin tener que
+buscar en varias secciones. La navegacion es fija de cinco pestañas y el boton
+de accion contextual permite agregar materia, bloque o tarea segun la pantalla
+(lib/ui/home_shell.dart, lineas 92-127).
+
+INTUITIVA: SI. Los estados vacios invitan a crear la primera materia, los
+formularios validan los datos (por ejemplo, que la hora final sea posterior a
+la inicial), el simulador muestra el resultado mientras se escribe la meta y
+el QR ofrece primero un resumen antes de agregar datos; todo esta en espanol y
+se usan componentes Material 3.
+
+SEGURA: SI, CON MATICES. Los datos quedan en el dispositivo, no hay credenciales
+ni servidor, se piden permisos minimos y la restauracion del respaldo valida el
+formato antes de reemplazar los datos (lib/state/app_state.dart, 171-179). El
+QR valida el contenido antes de importar y solo agrega materias y bloques; la
+camara se solicita unicamente cuando el usuario elige escanear.
+Como limitaciones: la base de datos no esta cifrada, el respaldo se copia al
+portapapeles y el APK actual esta firmado con la clave de depuracion
+(android/app/build.gradle.kts, lineas 34-38); las notificaciones programadas
+son inexactas a proposito para no pedir permisos especiales de Android 12+.
+
+VEREDICTO: cumple el criterio solicitado dentro del alcance del MVP y del
+proyecto académico. Para un lanzamiento a produccion se recomienda agregar
+cifrado local, firma release propia y una opcion de respaldo mas protegida.
+
+7. VERIFICACION REALIZADA
+-------------------------
+- flutter analyze  => "No issues found!"
+- flutter test     => 25/25 pruebas pasadas.
+- flutter build apk --release --split-per-abi y flutter build apk --release
+  => APKs actualizados en dist/ (arm64, armv7 y universal).
+- Dependencias nuevas: qr_flutter, mobile_scanner, share_plus, path_provider y
+  url_launcher. Ninguna requiere servidor propio ni cuenta de usuario.
+
+8. TEXTO LISTO PARA EXPONER
+---------------------------
+OrganiU es una aplicacion movil Android, desarrollada en Flutter, que ayuda
+al estudiante universitario a organizar su semestre en un solo lugar: horario
+de clases, tareas y examenes, recordatorios, promedios, exportacion a calendario,
+acceso directo al formulario de asistencia que ya se usaba por QR y un simulador
+que indica que nota necesita en lo que falta para alcanzar su meta, en escala
+0-10 o 0-100, pensada para la realidad de Nicaragua. Toda la organizacion
+funciona sin conexion y mantiene la informacion academica en el dispositivo;
+solo el formulario de asistencia abre el navegador cuando hay internet. No
+requiere cuenta. Resuelve un problema real y concreto -la dispersion y el olvido
+de fechas y clases- de forma rapida, porque toda la informacion relevante
+aparece en la pantalla "Hoy"; intuitiva, porque su navegacion, formularios,
+simulador, boton "Asistencia de Clases" y avisos de horario solapado son simples y estan
+en espanol; y segura dentro de su alcance, porque no envia datos a ningun
+servidor propio, usa permisos minimos y el QR opcional comparte solo horario,
+sin notas ni tareas. El proyecto cuenta con arquitectura por capas, 25 pruebas
+automatizadas,
+analisis sin errores y APKs compilados, ademas de mejoras futuras como un widget
+de pantalla de inicio y sincronizacion opcional.
+
+9. MEJORAS FUTURAS SUGERIDAS
+----------------------------
+- Widget en la pantalla de inicio con la proxima clase.
+- Notificaciones previas a cada clase.
+- Sincronizacion opcional con Supabase para varios dispositivos.
+- Firma release y cifrado de la base de datos para produccion.

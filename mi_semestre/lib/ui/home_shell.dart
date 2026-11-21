@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../app.dart';
+import '../services/attendance_service.dart';
 import 'assessment_form_screen.dart';
 import 'assessments_screen.dart';
 import 'block_form_sheet.dart';
@@ -32,9 +33,7 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     if (state.loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
       appBar: AppBar(
@@ -42,6 +41,17 @@ class _HomeShellState extends State<HomeShell> {
           _titles[_index],
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
+        actions: <Widget>[
+          if (_index == 0)
+            Tooltip(
+              message: 'Abrir formulario de asistencia',
+              child: TextButton.icon(
+                onPressed: () => _openAttendance(context),
+                icon: const Icon(Icons.how_to_reg_outlined, size: 20),
+                label: const Text('Asistencia de Clases'),
+              ),
+            ),
+        ],
       ),
       body: IndexedStack(
         index: _index,
@@ -86,6 +96,18 @@ class _HomeShellState extends State<HomeShell> {
         ],
       ),
     );
+  }
+
+  Future<void> _openAttendance(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final opened = await openAttendanceForm();
+    if (!opened) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el formulario de asistencia'),
+        ),
+      );
+    }
   }
 
   Widget? _buildFab(BuildContext context) {
