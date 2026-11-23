@@ -117,11 +117,14 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 onTap: () async {
                   final messenger = ScaffoldMessenger.of(context);
-                  await state.sendTestNotification();
+                  final granted = await state.sendTestNotification();
+                  if (!context.mounted) return;
                   messenger.showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text(
-                        'Notificación enviada. Si no la ves, revisa los permisos.',
+                        granted
+                            ? 'Notificación de prueba enviada.'
+                            : 'Permiso denegado. Actívalo en Ajustes de Android > OrganiU > Notificaciones.',
                       ),
                     ),
                   );

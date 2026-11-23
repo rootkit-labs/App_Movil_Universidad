@@ -12,14 +12,14 @@ class AppState extends ChangeNotifier {
   AppState({
     Repository? repository,
     SettingsService? settings,
-    NotificationService? notifications,
+    NotificationPort? notifications,
   }) : _repository = repository ?? Repository(),
        _settings = settings ?? SettingsService(),
        _notifications = notifications ?? NotificationService.instance;
 
   final Repository _repository;
   final SettingsService _settings;
-  final NotificationService _notifications;
+  final NotificationPort _notifications;
 
   bool loading = true;
   List<Subject> subjects = <Subject>[];
@@ -36,11 +36,21 @@ class AppState extends ChangeNotifier {
     themeMode = stored.themeMode;
     reminderMinutes = stored.reminderMinutes;
     notificationsEnabled = stored.notificationsEnabled;
+    if (notificationsEnabled) {
+      notificationsEnabled = await _notifications.requestPermission();
+      await _settings.saveNotificationsEnabled(notificationsEnabled);
+    } else {
+      try {
+        await _notifications.cancelAll();
+      } catch (_) {}
+    }
     await refresh();
     loading = false;
     _notify();
     await _syncNotifications();
   }
+
+  Future<void> resyncNotifications() => _syncNotifications();
 
   Future<void> refresh() async {
     subjects = await _repository.subjects();
@@ -117,9 +127,16 @@ class AppState extends ChangeNotifier {
     if (enabled) {
       final granted = await _notifications.requestPermission();
       notificationsEnabled = granted;
+      if (!granted) {
+        try {
+          await _notifications.cancelAll();
+        } catch (_) {}
+      }
     } else {
       notificationsEnabled = false;
-      await _notifications.cancelAll();
+      try {
+        await _notifications.cancelAll();
+      } catch (_) {}
     }
     _notify();
     await _settings.saveNotificationsEnabled(notificationsEnabled);
@@ -129,14 +146,14 @@ class AppState extends ChangeNotifier {
     return notificationsEnabled;
   }
 
-  Future<void> sendTestNotification() async {
-    if (!notificationsEnabled) {
-      final granted = await _notifications.requestPermission();
-      notificationsEnabled = granted;
-      await _settings.saveNotificationsEnabled(granted);
-      _notify();
-    }
+  Future<bool> sendTestNotification() async {
+    final granted = await _notifications.requestPermission();
+    notificationsEnabled = granted;
+    await _settings.saveNotificationsEnabled(granted);
+    _notify();
+    if (!granted) return false;
     await _notifications.showTestNotification();
+    return true;
   }
 
   Future<void> _syncNotifications() async {
@@ -144,25 +161,53 @@ class AppState extends ChangeNotifier {
     try {
       await _notifications.cancelAll();
       final now = DateTime.now();
+      final pending = <Assessment>[];
       for (final assessment in assessments) {
-        if (assessment.done) continue;
-        final when = assessment.due.subtract(
+        if (assessment.done || assessment.id == null) continue;
+        pending.add(assessment);
+        if (!assessment.due.isAfter(now)) continue;
+        final reminderAt = assessment.due.subtract(
           Duration(minutes: reminderMinutes),
         );
-        if (!when.isAfter(now)) continue;
-        final id = assessment.id;
-        if (id == null) continue;
+        final notifyAt = reminderAt.isAfter(now) ? reminderAt : assessment.due;
         final subject = subjectById(assessment.subjectId);
         await _notifications.scheduleAssessmentReminder(
-          id: id,
+          id: assessment.id!,
           title: assessment.title,
           subject: subject?.name ?? 'Materia',
-          when: when,
+          when: notifyAt,
         );
       }
-    } catch (_) {
-      // Un fallo al programar no debe romper la aplicación.
-    }
+      if (pending.isEmpty) return;
+      final sorted = List<Assessment>.of(pending)
+        ..sort((a, b) => a.due.compareTo(b.due));
+      final next = sorted.first;
+      final subject = subjectById(next.subjectId)?.name ?? 'Materia';
+      final overdue = sorted.where((item) => !item.due.isAfter(now)).length;
+      final details = <String>[
+        'Próxima: ${next.title} · $subject · ${_formatWhen(next.due)}',
+        if (overdue > 0)
+          overdue == 1 ? '1 vencida' : '$overdue vencidas',
+      ];
+      await _notifications.schedulePendingSummary(
+        count: pending.length,
+        when: _nextDailySummary(now),
+        detail: details.join(' · '),
+      );
+    } catch (_) {}
+  }
+
+  DateTime _nextDailySummary(DateTime now) {
+    final today = DateTime(now.year, now.month, now.day, 8);
+    return today.isAfter(now) ? today : today.add(const Duration(days: 1));
+  }
+
+  String _formatWhen(DateTime value) {
+    final day = value.day.toString().padLeft(2, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
   }
 
   Future<String> exportBackup() async {

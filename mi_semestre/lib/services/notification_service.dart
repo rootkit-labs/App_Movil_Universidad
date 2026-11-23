@@ -2,7 +2,32 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-class NotificationService {
+abstract class NotificationPort {
+  Future<void> init();
+
+  Future<bool> requestPermission();
+
+  Future<void> scheduleAssessmentReminder({
+    required int id,
+    required String title,
+    required String subject,
+    required DateTime when,
+  });
+
+  Future<void> schedulePendingSummary({
+    required int count,
+    required DateTime when,
+    required String detail,
+  });
+
+  Future<void> cancel(int id);
+
+  Future<void> cancelAll();
+
+  Future<void> showTestNotification();
+}
+
+class NotificationService implements NotificationPort {
   NotificationService._();
 
   static final NotificationService instance = NotificationService._();
@@ -15,10 +40,12 @@ class NotificationService {
   static const String _channelId = 'mi_semestre_recordatorios';
   static const String _channelName = 'Recordatorios académicos';
   static const String _channelDescription =
-      'Avisos de entregas, exámenes y proyectos';
+      'Avisos de entregas, exámenes, proyectos y tareas pendientes';
 
   static const int testNotificationId = 999999;
+  static const int pendingSummaryNotificationId = 900001;
 
+  @override
   Future<void> init() async {
     if (_initialized) return;
     tzdata.initializeTimeZones();
@@ -27,17 +54,34 @@ class NotificationService {
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
     await _plugin.initialize(settings: settings);
+    try {
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      await android?.createNotificationChannel(
+        const AndroidNotificationChannel(
+          _channelId,
+          _channelName,
+          description: _channelDescription,
+          importance: Importance.high,
+          playSound: true,
+          enableVibration: true,
+        ),
+      );
+    } catch (_) {}
     _initialized = true;
   }
 
+  @override
   Future<bool> requestPermission() async {
-    await init();
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    if (android == null) return false;
     try {
+      await init();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android == null) return true;
       final granted = await android.requestNotificationsPermission();
       return granted ?? true;
     } catch (_) {
@@ -64,6 +108,7 @@ class NotificationService {
     return '$day/$month $hour:$minute';
   }
 
+  @override
   Future<void> scheduleAssessmentReminder({
     required int id,
     required String title,
@@ -82,16 +127,39 @@ class NotificationService {
     );
   }
 
+  @override
+  Future<void> schedulePendingSummary({
+    required int count,
+    required DateTime when,
+    required String detail,
+  }) async {
+    await init();
+    if (!when.isAfter(DateTime.now())) return;
+    await _plugin.zonedSchedule(
+      id: pendingSummaryNotificationId,
+      title: count == 1
+          ? 'Tienes 1 tarea pendiente'
+          : 'Tienes $count tareas pendientes',
+      body: detail,
+      scheduledDate: tz.TZDateTime.from(when, tz.local),
+      notificationDetails: _details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  @override
   Future<void> cancel(int id) async {
     await init();
     await _plugin.cancel(id: id);
   }
 
+  @override
   Future<void> cancelAll() async {
     await init();
     await _plugin.cancelAll();
   }
 
+  @override
   Future<void> showTestNotification() async {
     await init();
     await _plugin.show(
@@ -112,18 +180,14 @@ class NotificationService {
           return location;
         }
       }
-    } catch (_) {
-      // Ignorar y continuar con la siguiente estrategia.
-    }
+    } catch (_) {}
     try {
       for (final location in tz.timeZoneDatabase.locations.values) {
         if (tz.TZDateTime.now(location).timeZoneOffset == offset) {
           return location;
         }
       }
-    } catch (_) {
-      // Ignorar y usar UTC como último recurso.
-    }
+    } catch (_) {}
     return tz.UTC;
   }
 }

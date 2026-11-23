@@ -26,9 +26,9 @@ if ($LASTEXITCODE -ne 0) { throw 'La compilación del APK universal falló' }
 $dist = Join-Path $PSScriptRoot 'dist'
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 $out = Join-Path $PSScriptRoot 'build\app\outputs\flutter-apk'
-Copy-Item (Join-Path $out 'app-arm64-v8a-release.apk') (Join-Path $dist 'OrganiU-1.0.0-arm64-v8a.apk') -Force
-Copy-Item (Join-Path $out 'app-armeabi-v7a-release.apk') (Join-Path $dist 'OrganiU-1.0.0-armeabi-v7a.apk') -Force
-Copy-Item (Join-Path $out 'app-release.apk') (Join-Path $dist 'OrganiU-1.0.0-universal.apk') -Force
+Copy-Item (Join-Path $out 'app-arm64-v8a-release.apk') (Join-Path $dist 'OrganiU-1.0.1-arm64-v8a.apk') -Force
+Copy-Item (Join-Path $out 'app-armeabi-v7a-release.apk') (Join-Path $dist 'OrganiU-1.0.1-armeabi-v7a.apk') -Force
+Copy-Item (Join-Path $out 'app-release.apk') (Join-Path $dist 'OrganiU-1.0.1-universal.apk') -Force
 
 Write-Host ''
 Write-Host 'APK listos en:' (Resolve-Path $dist)

@@ -31,13 +31,14 @@ class OrganiUApp extends StatefulWidget {
   State<OrganiUApp> createState() => _OrganiUAppState();
 }
 
-class _OrganiUAppState extends State<OrganiUApp> {
+class _OrganiUAppState extends State<OrganiUApp> with WidgetsBindingObserver {
   late final AppState _state;
   late final bool _ownsState;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _ownsState = widget.state == null;
     _state = widget.state ?? AppState();
     if (_ownsState) {
@@ -47,10 +48,18 @@ class _OrganiUAppState extends State<OrganiUApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (_ownsState) {
       _state.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _ownsState) {
+      _state.resyncNotifications();
+    }
   }
 
   @override

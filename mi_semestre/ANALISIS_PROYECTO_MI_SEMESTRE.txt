@@ -30,9 +30,10 @@ La aplicacion se organiza en cinco pestañas (lib/ui/home_shell.dart, 23-88):
 - MATERIAS: alta, edicion y eliminacion con color, docente y aula;
   calculo de promedio ponderado por materia (academic_logic.dart, 141-162).
   No se registran creditos academicos porque no se usan en Nicaragua.
-- AJUSTES: tema claro/oscuro/sistema, activacion de notificaciones,
-  anticipacion del recordatorio (5 min a 1 dia), notificacion de prueba y
-  respaldo JSON usando el portapapeles.
+- AJUSTES: tema claro/oscuro/sistema, activacion de notificaciones (el permiso
+  se pide al abrir la app), anticipacion del recordatorio (5 min a 1 dia),
+  notificacion de prueba, resumen diario de tareas pendientes y respaldo JSON
+  usando el portapapeles.
 - SIMULADOR DE NOTA FINAL: calcula la nota necesaria en las evaluaciones
   pendientes, respeta ponderaciones y permite escala 0-10 o 0-100
   (lib/domain/academic_logic.dart, funcion simulateFinalGrade).
@@ -52,9 +53,10 @@ un chat y las notas en otro lugar. Responde en segundos a preguntas como:
 - "¿Que entrega vence esta semana?"
 - "¿Como voy en esta materia?"
 - "¿Que nota necesito en el final para alcanzar mi meta?"
-Ademas avisa automaticamente antes de cada entrega y alerta sobre clases
-solapadas antes de guardarlas (lib/domain/academic_logic.dart y
-lib/ui/block_form_sheet.dart). La opcion de QR es opcional: en Nicaragua no es
+Ademas avisa automaticamente antes de cada entrega, avisa a la hora de entrega
+si la fecha estaba muy cerca, muestra un resumen diario de pendientes y alerta
+sobre clases solapadas antes de guardarlas (lib/state/app_state.dart,
+lib/domain/academic_logic.dart y lib/ui/block_form_sheet.dart). La opcion de QR es opcional: en Nicaragua no es
 compartir horarios una practica comun, pero queda disponible para quien si
 quiera usarlo.
 
@@ -68,8 +70,8 @@ quiera usarlo.
   (android/app/src/main/AndroidManifest.xml). No pide ubicacion, contactos ni
   almacenamiento externo.
 - Se instala directamente desde un APK, sin necesidad de Google Play
-  (README.md, lineas 18-39). En dist/ hay tres versiones actualizadas:
-  arm64-v8a (25.5 MB), armeabi-v7a (21.9 MB) y universal (69.7 MB).
+  (README.md, lineas 18-39). En dist/ hay tres versiones actualizadas 1.0.1:
+  arm64-v8a (25.5 MB), armeabi-v7a (21.9 MB) y universal (69.8 MB).
 - Interfaz en espanol, tema claro/oscuro y Material 3. El nombre visible es
   OrganiU; el paquete, la base de datos y el prefijo QR conservan "mi_semestre"
   para no perder datos ni codigos ya compartidos.
@@ -77,8 +79,9 @@ quiera usarlo.
   lineas 83-125).
 - Arquitectura por capas: presentacion (ui/), estado (state/), dominio
   (domain/), datos (data/) y servicios (services/).
-- Calidad verificada: flutter analyze sin errores y 25/25 pruebas automatizadas
-  (17 de logica academica, 3 de interfaz, 1 de ICS, 3 de QR y 1 de asistencia).
+- Calidad verificada: flutter analyze sin errores y 30/30 pruebas automatizadas
+  (17 de logica academica, 3 de interfaz, 1 de ICS, 3 de QR, 1 de asistencia y
+  5 de notificaciones).
 - Funciones que destacan sobre una app simple: simulador de nota final,
   advertencia de choques de horario, exportacion a calendario, acceso directo
   al formulario de asistencia y QR opcional que comparte solo horario, sin
@@ -132,7 +135,7 @@ cifrado local, firma release propia y una opcion de respaldo mas protegida.
 7. VERIFICACION REALIZADA
 -------------------------
 - flutter analyze  => "No issues found!"
-- flutter test     => 25/25 pruebas pasadas.
+- flutter test     => 30/30 pruebas pasadas.
 - flutter build apk --release --split-per-abi y flutter build apk --release
   => APKs actualizados en dist/ (arm64, armv7 y universal).
 - Dependencias nuevas: qr_flutter, mobile_scanner, share_plus, path_provider y
@@ -154,7 +157,7 @@ aparece en la pantalla "Hoy"; intuitiva, porque su navegacion, formularios,
 simulador, boton "Asistencia de Clases" y avisos de horario solapado son simples y estan
 en espanol; y segura dentro de su alcance, porque no envia datos a ningun
 servidor propio, usa permisos minimos y el QR opcional comparte solo horario,
-sin notas ni tareas. El proyecto cuenta con arquitectura por capas, 25 pruebas
+sin notas ni tareas. El proyecto cuenta con arquitectura por capas, 30 pruebas
 automatizadas,
 analisis sin errores y APKs compilados, ademas de mejoras futuras como un widget
 de pantalla de inicio y sincronizacion opcional.

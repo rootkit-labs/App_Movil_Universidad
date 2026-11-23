@@ -314,7 +314,8 @@ class _AssessmentFormScreenState extends State<AssessmentFormScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Recibirás un recordatorio ${state.reminderMinutes} minutos antes si las notificaciones están activas.',
+              'Si las notificaciones están activas, te avisaremos ${state.reminderMinutes} minutos antes '
+              '(o a la hora de entrega si la fecha está muy cerca). También recibirás un resumen diario de pendientes.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

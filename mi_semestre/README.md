@@ -17,7 +17,7 @@ Construida con **Flutter 3.50 / Dart 3.14**.
 - **Horario**: vista por día (lunes a domingo) con bloques por materia, aula, docente y total de horas.
 - **Tareas**: exámenes, entregas, proyectos y exposiciones; filtro por pendientes/hechas; notas y ponderación.
 - **Materias**: CRUD con color, docente y aula; promedio ponderado por materia.
-- **Recordatorios**: notificación local X minutos antes de cada entrega (5 min a 1 día antes).
+- **Recordatorios**: notificación local X minutos antes de cada entrega (5 min a 1 día antes), aviso a la hora de entrega si la fecha está muy cerca y resumen diario de tareas pendientes. El permiso de notificaciones se solicita al abrir la app.
 - **Ajustes**: tema claro/oscuro/sistema, permiso de notificaciones, notificación de prueba.
 - **Respaldo**: exportar/importar todos los datos como JSON usando el portapapeles.
 - **Simulador de nota final**: calcula qué nota necesitas en las evaluaciones pendientes, con
@@ -35,16 +35,16 @@ Los APK compilados están en la carpeta `dist/`:
 
 | Archivo | Cuándo usarlo |
 |---|---|
-| `OrganiU-1.0.0-arm64-v8a.apk` (25.5 MB) | **Recomendado**: casi todos los teléfonos Android modernos |
-| `OrganiU-1.0.0-armeabi-v7a.apk` (21.9 MB) | Teléfonos antiguos de 32 bits |
-| `OrganiU-1.0.0-universal.apk` (69.7 MB) | Si no sabes qué arquitectura tiene el equipo |
+| `OrganiU-1.0.1-arm64-v8a.apk` (25.5 MB) | **Recomendado**: casi todos los teléfonos Android modernos |
+| `OrganiU-1.0.1-armeabi-v7a.apk` (21.9 MB) | Teléfonos antiguos de 32 bits |
+| `OrganiU-1.0.1-universal.apk` (69.8 MB) | Si no sabes qué arquitectura tiene el equipo |
 
 Pasos:
 
 1. Copia el APK al teléfono (cable USB, Google Drive, WhatsApp a ti mismo, etc.).
 2. Ábrelo desde el explorador de archivos.
 3. Si Android lo pide, activa **"Instalar apps desconocidas"** para la app con la que lo abriste.
-4. Al abrir OrganiU, acepta el permiso de **notificaciones** para recibir los recordatorios.
+4. Al abrir OrganiU 1.0.1, acepta el permiso de **notificaciones** que se solicita automáticamente. Si lo rechazaste antes, ve a Ajustes de Android > OrganiU > Notificaciones y actívalo.
 5. Si vas a escanear horarios, acepta el permiso de **cámara** cuando la app lo pida.
 
 > El APK está firmado con la clave de depuración de Android. Sirve para instalar y evaluar el
@@ -94,11 +94,12 @@ lib/
     calendar_service.dart      Generación y compartición de archivos .ics
     schedule_share_service.dart  Codificación/validación del QR de horario
     attendance_service.dart      Apertura del formulario de asistencia (URL fija)
-  state/app_state.dart       ChangeNotifier: estado global y sincronización de recordatorios
+  state/app_state.dart       ChangeNotifier: estado global, permiso y sincronización de recordatorios al guardar, restaurar o volver a la app
   ui/                        Pantallas, formularios y widgets reutilizables
 test/
   academic_logic_test.dart   17 pruebas unitarias de la lógica académica
   app_smoke_test.dart       3 pruebas de humo de la interfaz (navegación, asistencia y alta de materia)
+  notification_sync_test.dart 5 pruebas de permiso, programación y resumen de notificaciones
   attendance_service_test.dart 1 prueba de la URL de asistencia
   calendar_service_test.dart 1 prueba del archivo .ics
   schedule_share_service_test.dart 3 pruebas del QR de horario
@@ -125,7 +126,7 @@ test/
 
 ```powershell
 flutter analyze   # 0 issues
-flutter test      # 25/25 pruebas pasan (lógica, ICS, QR, asistencia y humo de UI)
+flutter test      # 30/30 pruebas pasan (lógica, ICS, QR, asistencia, notificaciones y humo de UI)
 ```
 
 ## Siguientes pasos sugeridos
